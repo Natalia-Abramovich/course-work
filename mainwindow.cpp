@@ -6,10 +6,11 @@
 #include <tlhelp32.h>
 #include <tchar.h>
 #include <QTableView>
+#include <iostream>
 
 //  Forward declarations:
 QString myVector[10];
-BOOL GetProcessList(char*);
+char GetProcessList(char**);
 BOOL ListProcessModules(DWORD dwPID);
 BOOL ListProcessThreads(DWORD dwOwnerPID);
 void printError(TCHAR* msg);
@@ -22,113 +23,28 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 
  char *mVector;
-char res[100];
+ mVector=new char [20];
+  mVector="'vbn'";
 
-GetProcessList(mVector);
-
-       PROCESSENTRY32 pe32;
-       printf("\nPROCESS NAME:  %s");
-         pe32.dwSize = sizeof(PROCESSENTRY32);
- ui->setupUi(this);
- QStandardItemModel *model = new QStandardItemModel;
- QStringList verticalHeader;
-    // QStandardItem *item;
-
-
-
-
-
-
-
-  //   ui->tableView->setModel(model);
-
- //    ui->tableView->resizeRowsToContents();
- //    ui->tableView->resizeColumnsToContents();
-
-     HANDLE hProcessSnap;
-     HANDLE hProcess;
-     //PROCESSENTRY32 pe32;
-     DWORD dwPriorityClass;
-
-     // Take a snapshot of all processes in the system.
-     hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-     if (hProcessSnap == INVALID_HANDLE_VALUE)
-     {
-         printError(TEXT("CreateToolhelp32Snapshot (of processes)"));
-         //return(FALSE);
-     }
-
-     // Set the size of the structure before using it.
-     pe32.dwSize = sizeof(PROCESSENTRY32);
-
-     // Retrieve information about the first process,
-     // and exit if unsuccessful
-     if (!Process32First(hProcessSnap, &pe32))
-     {
-         printError(TEXT("Process32First")); // show cause of failure
-         CloseHandle(hProcessSnap);          // clean the snapshot object
-       //  return(FALSE);
-     }
-
-     // Now walk the snapshot of processes, and
-     // display information about each process in turn
-     do
-     {
-       /*  _tprintf(TEXT("\n\n====================================================="));
-         _tprintf(TEXT("\nPROCESS NAME:  %s"), pe32.szExeFile);
-         _tprintf(TEXT("\n-------------------------------------------------------"));
- *///QString
-        // myVector = (char*)pe32.szExeFile;
-         for (int i = 0; i < 10;i++)
-         {
-
-       char myVector = (char)pe32.szExeFile;
-// for (int j = 0; j < 10;j++)
-
-
-         res[i]=myVector;
+ char **res;
+ui->setupUi(this);
+QObject::connect(ui->pushButton_1, SIGNAL(clicked()), this, SLOT(MyEventHandler()));
+QObject::connect(this, SIGNAL(MySignal(QString)), ui->pushButton_2, SLOT(quit()));
+QStandardItemModel *model = new QStandardItemModel;
+QStringList verticalHeader;
+ GetProcessList(res);
+int j=0;
+for(int i=0; i<10;i++,j++)
+{
+ //  * mVector=res[i][i];
+// verticalHeader.append(mVector);
 }
-         verticalHeader.append(res);
+ model->setVerticalHeaderLabels(verticalHeader);
+ ui->tableView->setModel(model);
 
-
-
-
-         // Retrieve the priority class.
-         dwPriorityClass = 0;
-         hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
-         if (hProcess == NULL)
-             printError(TEXT("OpenProcess"));
-         else
-         {
-             dwPriorityClass = GetPriorityClass(hProcess);
-             if (!dwPriorityClass)
-                 printError(TEXT("GetPriorityClass"));
-             CloseHandle(hProcess);
-         }
-
-    /*     _tprintf(TEXT("\n  Process ID        = 0x%08X"), pe32.th32ProcessID);
-         _tprintf(TEXT("\n  Thread count      = %d"), pe32.cntThreads);
-         _tprintf(TEXT("\n  Parent process ID = 0x%08X"), pe32.th32ParentProcessID);
-         _tprintf(TEXT("\n  Priority base     = %d"), pe32.pcPriClassBase);*/
-         if (dwPriorityClass)
-         /*    _tprintf(TEXT("\n  Priority class    = %d"), dwPriorityClass);*/
-
-         // List the modules and threads associated with this process
-         ListProcessModules(pe32.th32ProcessID);
-         ListProcessThreads(pe32.th32ProcessID);
-
-     } while (Process32Next(hProcessSnap, &pe32));
-
-     CloseHandle(hProcessSnap);
-     //return(TRUE);
-     //
-     model->setVerticalHeaderLabels(verticalHeader);
-     ui->tableView->setModel(model);
-
-        ui->tableView->resizeRowsToContents();
-        ui->tableView->resizeColumnsToContents();
-   }
-
+    ui->tableView->resizeRowsToContents();
+    ui->tableView->resizeColumnsToContents();
+}
 MainWindow::~MainWindow()
 {
     delete ui;
@@ -139,72 +55,142 @@ void MainWindow::MyEventHandler()
     emit MySignal(ui->pushButton_1->text());
 
 }
-BOOL GetProcessList( char* myVector)
-{
-    HANDLE hProcessSnap;
-    HANDLE hProcess;
-    PROCESSENTRY32 pe32;
-    DWORD dwPriorityClass;
+DWORD GetProcessByExeName(char *ExeName);
 
-    // Take a snapshot of all processes in the system.
-    hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hProcessSnap == INVALID_HANDLE_VALUE)
-    {
-        printError(TEXT("CreateToolhelp32Snapshot (of processes)"));
-        return(FALSE);
-    }
-
-    // Set the size of the structure before using it.
-    pe32.dwSize = sizeof(PROCESSENTRY32);
-
-    // Retrieve information about the first process,
-    // and exit if unsuccessful
-    if (!Process32First(hProcessSnap, &pe32))
-    {
-        printError(TEXT("Process32First")); // show cause of failure
-        CloseHandle(hProcessSnap);          // clean the snapshot object
-        return(FALSE);
-    }
-
-    // Now walk the snapshot of processes, and
-    // display information about each process in turn
-    do
-    {
-      /*  _tprintf(TEXT("\n\n====================================================="));
-        _tprintf(TEXT("\nPROCESS NAME:  %s"), pe32.szExeFile);
-        _tprintf(TEXT("\n-------------------------------------------------------"));
-*/  myVector = (char*)pe32.szExeFile;
-        QStringList verticalHeader;
-        verticalHeader.append(myVector);
-       //  model->setVerticalHeaderLabels(verticalHeader);
-        // Retrieve the priority class.
-        dwPriorityClass = 0;
-        hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
-        if (hProcess == NULL)
-            printError(TEXT("OpenProcess"));
+// ------------------------------------- Использование --------------------------------------
+        DWORD PID = GetProcessByExeName("notepad.exe");
+        if ( !PID ) ShowMessage("Процесс не найден");
         else
         {
-            dwPriorityClass = GetPriorityClass(hProcess);
-            if (!dwPriorityClass)
-                printError(TEXT("GetPriorityClass"));
-            CloseHandle(hProcess);
+        HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, PID );
+        if ( TerminateProcess(hProcess, 0) ) ShowMessage("Процесс убит");
+                else ShowMessage("Не могу убить процесс");
+        }
+// ----------------------------------------------------------------------------------
+
+DWORD GetProcessByExeName(char *ExeName)
+{
+        DWORD Pid;
+
+    PROCESSENTRY32 pe32;
+        pe32.dwSize = sizeof(PROCESSENTRY32);
+
+    HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPALL, NULL);
+    if( hProcessSnap == INVALID_HANDLE_VALUE)
+    {
+//        MessageBox(NULL, "Error = " + GetLastError() , "Error (GetProcessByExeName)", MB_OK|MB_ICONERROR);
+        return false;
+    }
+
+    if ( Process32First(hProcessSnap, &pe32) )
+        {
+            do
+                {
+           /*         if ( strcmpi(pe32.szExeFile, ExeName) == 0)
+                        {
+                                CloseHandle(hProcessSnap);
+                                return pe32.th32ProcessID;
+                        }*/
+                } while ( Process32Next(hProcessSnap, &pe32) );
         }
 
-   /*     _tprintf(TEXT("\n  Process ID        = 0x%08X"), pe32.th32ProcessID);
-        _tprintf(TEXT("\n  Thread count      = %d"), pe32.cntThreads);
-        _tprintf(TEXT("\n  Parent process ID = 0x%08X"), pe32.th32ParentProcessID);
-        _tprintf(TEXT("\n  Priority base     = %d"), pe32.pcPriClassBase);*/
-        if (dwPriorityClass)
-        /*    _tprintf(TEXT("\n  Priority class    = %d"), dwPriorityClass);*/
-
-        // List the modules and threads associated with this process
-        ListProcessModules(pe32.th32ProcessID);
-        ListProcessThreads(pe32.th32ProcessID);
-
-    } while (Process32Next(hProcessSnap, &pe32));
-
     CloseHandle(hProcessSnap);
-    return(TRUE);
+        return 0;
+}
+char GetProcessList(char**  res )
+{
+
+   /* **res =new char* [20];
+           for(int i = 0; i < size; i++)
+           {
+               res[i] =new char* [20];
+           }*/
+int k=0;
+           PROCESSENTRY32 pe32;
+           printf("\nPROCESS NAME:  %s");
+             pe32.dwSize = sizeof(PROCESSENTRY32);    
+        // QStandardItem *item;
+      //   ui->tableView->setModel(model);
+
+     //    ui->tableView->resizeRowsToContents();
+     //    ui->tableView->resizeColumnsToContents();
+
+         HANDLE hProcessSnap;
+         HANDLE hProcess;
+         //PROCESSENTRY32 pe32;
+         DWORD dwPriorityClass;
+
+         // Take a snapshot of all processes in the system.
+         hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+         if (hProcessSnap == INVALID_HANDLE_VALUE)
+         {
+             printError(TEXT("CreateToolhelp32Snapshot (of processes)"));
+             //return(FALSE);
+         }
+
+         // Set the size of the structure before using it.
+         pe32.dwSize = sizeof(PROCESSENTRY32);
+
+         // Retrieve information about the first process,
+         // and exit if unsuccessful
+         if (!Process32First(hProcessSnap, &pe32))
+         {
+             printError(TEXT("Process32First")); // show cause of failure
+             CloseHandle(hProcessSnap);          // clean the snapshot object
+           //  return(FALSE);
+         }
+
+         // Now walk the snapshot of processes, and
+         // display information about each process in turn
+         do
+         {
+           /*  _tprintf(TEXT("\n\n====================================================="));
+             _tprintf(TEXT("\nPROCESS NAME:  %s"), pe32.szExeFile);
+             _tprintf(TEXT("\n-------------------------------------------------------"));
+     *///QString
+           char* myVector = (char*)pe32.szExeFile;
+           int j=0; char* res1=new char[20];
+           for(int i=0; i<20; i++)
+           {
+               res1[i]=myVector[j];
+               j+=2;
+           }
+
+           res[j]=res1;
+             //verticalHeader.append(res);
+
+
+
+
+             // Retrieve the priority class.
+             dwPriorityClass = 0;
+             hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
+             if (hProcess == NULL)
+                 printError(TEXT("OpenProcess"));
+             else
+             {
+                 dwPriorityClass = GetPriorityClass(hProcess);
+                 if (!dwPriorityClass)
+                     printError(TEXT("GetPriorityClass"));
+                 CloseHandle(hProcess);
+             }
+
+        /*     _tprintf(TEXT("\n  Process ID        = 0x%08X"), pe32.th32ProcessID);
+             _tprintf(TEXT("\n  Thread count      = %d"), pe32.cntThreads);
+             _tprintf(TEXT("\n  Parent process ID = 0x%08X"), pe32.th32ParentProcessID);
+             _tprintf(TEXT("\n  Priority base     = %d"), pe32.pcPriClassBase);*/
+             if (dwPriorityClass)
+             /*    _tprintf(TEXT("\n  Priority class    = %d"), dwPriorityClass);*/
+
+             // List the modules and threads associated with this process
+             ListProcessModules(pe32.th32ProcessID);
+             ListProcessThreads(pe32.th32ProcessID);
+
+         } while (Process32Next(hProcessSnap, &pe32));
+
+         CloseHandle(hProcessSnap);
+        return **res;
+
 }
 
 
@@ -314,4 +300,3 @@ void printError(TCHAR* msg)
     // Display the message
   //  _tprintf(TEXT("\n  WARNING: %s failed with error %d (%s)"), msg, eNum, sysMsg);
 }
-
