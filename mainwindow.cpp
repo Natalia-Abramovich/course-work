@@ -10,12 +10,11 @@
 
 //  Forward declarations:
 QString myVector[10];
-char GetProcessList(char**);
+int j,i;
+void GetProcessList(char**);
 BOOL ListProcessModules(DWORD dwPID);
 BOOL ListProcessThreads(DWORD dwOwnerPID);
 void printError(TCHAR* msg);
-
-
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -26,24 +25,13 @@ MainWindow::MainWindow(QWidget *parent) :
  mVector=new char [20];
   mVector="'vbn'";
 
- char **res;
+
+
 ui->setupUi(this);
+
 QObject::connect(ui->pushButton_1, SIGNAL(clicked()), this, SLOT(MyEventHandler()));
 QObject::connect(this, SIGNAL(MySignal(QString)), ui->pushButton_2, SLOT(quit()));
-QStandardItemModel *model = new QStandardItemModel;
-QStringList verticalHeader;
- GetProcessList(res);
-int j=0;
-for(int i=0; i<10;i++,j++)
-{
- //  * mVector=res[i][i];
-// verticalHeader.append(mVector);
-}
- model->setVerticalHeaderLabels(verticalHeader);
- ui->tableView->setModel(model);
 
-    ui->tableView->resizeRowsToContents();
-    ui->tableView->resizeColumnsToContents();
 }
 MainWindow::~MainWindow()
 {
@@ -51,11 +39,30 @@ MainWindow::~MainWindow()
 }
 void MainWindow::MyEventHandler()
 {
+    char **res =new char* [100];
+               for(int i = 0; i < 20; i++)
+               {
+                   res[i] =new char [20];
+               }
 
-    emit MySignal(ui->pushButton_1->text());
+    QStandardItemModel *model = new QStandardItemModel;
+    QStringList verticalHeader;
 
+ GetProcessList(res);
+ j=0;
+ for( i=0; i<20;i++,j++)
+ {
+
+  verticalHeader.append(res[i]);
+// std::cout<<"!!!"<<result[i]<<"\n";
+ }
+model->setVerticalHeaderLabels(verticalHeader);
+ui->tableView->setModel(model);
+
+   ui->tableView->resizeRowsToContents();
+   ui->tableView->resizeColumnsToContents();
 }
-DWORD GetProcessByExeName(char *ExeName);
+/*DWORD GetProcessByExeName(char *ExeName);
 
 // ------------------------------------- Использование --------------------------------------
         DWORD PID = GetProcessByExeName("notepad.exe");
@@ -90,14 +97,14 @@ DWORD GetProcessByExeName(char *ExeName)
                         {
                                 CloseHandle(hProcessSnap);
                                 return pe32.th32ProcessID;
-                        }*/
+                        }
                 } while ( Process32Next(hProcessSnap, &pe32) );
         }
 
     CloseHandle(hProcessSnap);
         return 0;
-}
-char GetProcessList(char**  res )
+}*/
+void GetProcessList(char** result )
 {
 
    /* **res =new char* [20];
@@ -105,7 +112,6 @@ char GetProcessList(char**  res )
            {
                res[i] =new char* [20];
            }*/
-int k=0;
            PROCESSENTRY32 pe32;
            printf("\nPROCESS NAME:  %s");
              pe32.dwSize = sizeof(PROCESSENTRY32);    
@@ -142,6 +148,7 @@ int k=0;
 
          // Now walk the snapshot of processes, and
          // display information about each process in turn
+         int k=0;
          do
          {
            /*  _tprintf(TEXT("\n\n====================================================="));
@@ -149,15 +156,21 @@ int k=0;
              _tprintf(TEXT("\n-------------------------------------------------------"));
      *///QString
            char* myVector = (char*)pe32.szExeFile;
-           int j=0; char* res1=new char[20];
-           for(int i=0; i<20; i++)
-           {
-               res1[i]=myVector[j];
-               j+=2;
-           }
+           char* res =(char*)malloc((20)*sizeof(char));
 
-           res[j]=res1;
-             //verticalHeader.append(res);
+           for(int i=0,j=0; i<20; i++)
+                 {
+                     res[i]=myVector[j];
+                     j+=2;
+                 }
+
+               result[k]=res;
+                k++;
+
+
+        // std::cout<<"###"<<processes[k]<<"\n";
+
+           //  verticalHeader.append(res);
 
 
 
@@ -189,7 +202,6 @@ int k=0;
          } while (Process32Next(hProcessSnap, &pe32));
 
          CloseHandle(hProcessSnap);
-        return **res;
 
 }
 
